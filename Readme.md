@@ -1,6 +1,6 @@
 # Poll Aggregation in Real Time (PART) #
 
-* The app provides an interface for conducting polls/quizzes/surveys and obtaining the results in real time.
+* The app provides an interface for conducting polls/quizzes/surveys and obtaining the results in real time using websockets.
 * A user who wishes to conduct polls can create an account using a verified email-id.
 * S/He can create classrooms and add quizzes to it which will contain objective questions with multiple choice. A classroom can be used by more than one user which enables people to collaborate on projects . 
 * The user can publish and close the quiz as and when required which makes it possible to use it as a fun social quiz app or for testing purposes .
@@ -13,8 +13,17 @@
 * Django 1.10
 * Postgresql 9.6.1
 * Python 3.5.2
-* Django/Python packages : 
- django-registration
- websockets
- asyncio
+* Django/Python packages : **django-registration, websockets, asyncio**
+ 
+ 
+### How to run ###
+* Change and set variables `WEBSOCKET_URL` and `IP` of `settings.py` to system IP address.
+* Run websocket server using command:
+```sh
+python3 manage.py runwsserver 8080
+``` 
+* Run server using command:
+```sh
+python3 manage.py runserver 
+```
 
