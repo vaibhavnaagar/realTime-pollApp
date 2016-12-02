@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% block content %}
+
+{% if user.is_authenticated %}
+
+{% if question_list %}
+{% csrf_token %}
+  <input type="hidden" id="quizID" name="quizID" value="{{ quiz_id }}">
+    <ol>
+      <h1>{{ quiz_name }}</h1>
+
+      <div class="container">
+      <div class="barChart">
+      {% for question in question_list %}
+        <div>
+          <label for="question"><li>{{ question.question }}</li></label>
+        </div>
+
+        {% for choice in choice_list %}
+            {% if choice.question == question %}
+            <div id="{{ question.id}}{{ choice.id }}" class="barChart__row" data-value="{{ choice.votes }}">
+                <span class="barChart__label">{{ choice.option }}</span>
+                <span id="votes{{ question.id}}{{ choice.id }}" class="barChart__value">{{ choice.votes }}</span>
+                <span class="barChart__bar"><span class="barChart__barFill"></span></span>
+            </div>
+            {% else %}
+            {% endif %}
+        {% endfor %}
+
+    {% endfor %}
+    </div>
+    </ol>
+
+{% else %}
+    <p>No quiz to show results for.</p>
+{% endif %}
+{% else %}
+    <p>You are not authorized to view this page.</p>
+{% endif %}
+
+{% endblock %}
+
+{% block javascript %}
+    <script src="{% static 'js/$ws.js' %}"></script>
+    <script src="{% static 'js/jquery-1.11.1.min.js' %}"></script>
+
+    <script type='text/javascript'>
+      //  var $messages = $('#messages');
+        var WEBSOCKET_URL = '{{ WEBSOCKET_URL }}';
+        console.log(WEBSOCKET_URL);
+        $ws(WEBSOCKET_URL).ready(function($ws, ws) {
+            // React to incoming messages
+            $ws.on('showMessage', function(data) {
+                //var json_str = data.message;
+                console.log(data.message)
+                var votes_id = "#votes";
+                var id;
+                //console.log(typeof(data.message));
+                var object = data.message;
+                $.each(object, function(key,value){
+                  //console.log(key + ":" + object[key]);
+                  $.each(value, function(choiceID, votes){
+                    //console.log(choiceID + ":" + value[choiceID]);
+                    id = key + choiceID;
+                    //console.log(votes_id+id);
+                    $(votes_id + id).text(votes);
+                    $("#" + id).attr('data-value', votes);
+                  });
+                });
+                //var $row = $('<div>').text(data.message);
+                //$messages.prepend($row);
+            });
+
+            // And send an initial message
+            var msg = {};
+            msg['client_type'] = "instructor";
+            msg['quizID'] = $('input#quizID').val();
+            var json_msg = JSON.stringify(msg);
+            $ws.emit('showMessage', {
+                message: json_msg,
+            });
+
+            // Also send messages when user submits
+          /*  $('#chat-form').submit(function() {
+                var message = $('#input').val();
+                $ws.emit('showMessage', {
+                    message: message,
+                });
+                $('#input').val('');
+                return false;
+            });*/
+        });
+
+    </script>
+{% endblock %}

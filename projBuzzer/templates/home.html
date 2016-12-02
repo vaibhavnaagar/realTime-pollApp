@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container">
+    <div class="row">
+        <div class="jumbotron">
+            <h1>{% csrf_token %}Hello {{ user.username }}!</h1>
+            <p>You are on your Dashboard</p>
+        </div>
+    </div>
+    <div class="page">
+     <h1>Your Classrooms</h1>
+
+      {% if Classrooms %}
+      <ul>
+            {% for class in Classrooms %}
+
+    	   <div class="section">
+    	      <div class="section-header">
+
+    		<li><a href="/admin/buzzer/classroom/{{class.id}}/change/" style="font-size: 30px; text-decoration: none">{{ class.topic }}</a></li>
+    		<div class="toggle">
+    		  <span></span>
+    		</div>
+    	      </div>
+    	      <div class="content">
+                    <ul>
+                    {% for quiz in Quizes %}
+                        {% if quiz.classroom == class %}
+                        <li>
+                          ID : {{quiz.id}} &nbsp; &nbsp;&nbsp;
+                          <a href="/admin/buzzer/quiz/{{quiz.id}}/change/">{{ quiz.description }}</a>&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;
+                            <a href="/buzzer/publish/{{quiz.id}}">Publish</a>&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;
+                            <a href="/buzzer/unPublish/{{quiz.id}}">Unpublish</a>&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;
+                            <a href="/buzzer/results/{{quiz.id}}">Results</a>&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;
+                            <a href="/buzzer/clear/{{quiz.id}}">Clear</a>&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;
+
+                        </li>
+                        {%endif%}
+                    {% endfor %}
+                    </ul>
+    	      </div>
+    	    </div>
+
+            {% endfor %}
+
+
+      {% else %}
+        <p>You do not have any Classrooms</p>
+      {% endif %}
+    <h5><a href="/admin/">You can do insertions in your database here.</a><h5>
+
+      {% load static %}
+      <link href="{% static 'css/dash.css' %}" rel="stylesheet" type="text/css">
+
+      {% block javascript%}
+      <script>
+      $('.section-header').on('click', function (){
+        $(this).toggleClass('is-active').next('div').slideToggle();
+      });
+      </script>
+      {% endblock%}
+
+    </div></div>
+{% endblock %}

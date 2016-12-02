@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% block content %}
+    <p>Thanks</p>
+    <input type="hidden" id="quizID" name="quizID" value="{{ quiz_id }}">
+{% endblock %}
+
+{% block javascript %}
+    <script src="{% static 'js/$ws.js' %}"></script>
+    <script src="{% static 'js/jquery-1.11.1.min.js' %}"></script>
+    <script type='text/javascript'>
+      //  var $messages = $('#messages');
+        var WEBSOCKET_URL = '{{ WEBSOCKET_URL }}';
+        $ws(WEBSOCKET_URL).ready(function($ws, ws) {
+            // React to incoming messages
+            $ws.on('showMessage', function(data) {
+                //var $row = $('<div>').text(data.message);
+                //$messages.prepend($row);
+            });
+            // And send an initial message
+            var msg = {};
+            msg['client_type'] = "student";
+            msg['quizID'] = $('input#quizID').val();
+            var json_msg = JSON.stringify(msg);
+            console.log(json_msg);
+            $ws.emit('showMessage', {
+                message: json_msg,
+            });
+
+        });
+
+    </script>
+{% endblock %}

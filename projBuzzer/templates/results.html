@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% block content %}
+
+{% if user.is_authenticated %}
+<script type="text/javascript" src="{% static 'js/canvasjs.min.js' %}"></script>
+<script>
+  var data = [];
+  var charts = {};
+  var labels = {};
+  var option_index = 10;
+  var opt_label, value, chart;
+  var label_map = {};
+
+  function escapeHtmlImproved(text) {
+          var map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+          };
+          return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+</script>
+{% if question_list %}
+{% csrf_token %}
+<input type="hidden" id="quizID" name="quizID" value="{{ quiz_id }}">
+  <ol>
+    <h1>{{ quiz_name }}</h1>
+
+    <div class="container">
+
+    {% for question in question_list %}
+      <div>
+        <label for="question"><li>{{ question.question }}</li></label>
+      </div>
+
+      {% for choice in choice_list %}
+          {% if choice.question == question %}
+          <!--div id="{{ question.id}}{{ choice.id }}" class="barChart__row" data-value="{{ choice.votes }}">
+              <span class="barChart__label">{{ choice.option }}</span>
+              <span id="votes{{ question.id}}{{ choice.id }}" class="barChart__value">{{ choice.votes }}</span>
+              <span class="barChart__bar"><span class="barChart__barFill"></span></span>
+          </div-->
+          <script>
+            opt_label = "{{ choice.option }}";
+            value = {x: option_index, y: {{ choice.votes }}, label: opt_label};
+            label_map[{{ choice.id }}] = opt_label;
+            data.push(value);
+            option_index = option_index + 10;
+          </script>
+
+          {% else %}
+          {% endif %}
+      {% endfor %}
+      <div id="chartContainer{{ question.id}}" style="height: 150px; width: 100%;">
+      </div>
+    </br>
+      <script>
+        charts[{{ question.id }}]  = new CanvasJS.Chart("chartContainer{{ question.id }}",{
+          title :{
+            text: escapeHtmlImproved("{{question.question}}")
+          },
+          axisY:{
+             gridThickness: 0,
+           },
+          axisX:{
+            interval: 10,
+          },
+          data: [{
+            type: "bar",
+            dataPoints : data
+          }]
+        });
+        charts[{{ question.id }}] .render();
+
+        option_index = 10;
+        labels[{{ question.id }}] = label_map;
+        //charts[{{ question.id }}] = chart;
+        label_map = {};
+        data = [];
+
+       </script>
+
+  {% endfor %}
+  </div>
+  </ol>
+
+{% else %}
+  <p>No quiz to show results for.</p>
+{% endif %}
+{% else %}
+  <p>You are not authorized to view this page.</p>
+{% endif %}
+
+{% endblock %}
+
+
+{% block javascript %}
+
+
+<script src="{% static 'js/$ws.js' %}"></script>
+<script src="{% static 'js/jquery-1.11.1.min.js' %}"></script>
+
+<script type='text/javascript'>
+
+    var WEBSOCKET_URL = '{{ WEBSOCKET_URL }}';
+    console.log(WEBSOCKET_URL);
+    $ws(WEBSOCKET_URL).ready(function($ws, ws) {
+        // React to incoming messages
+        $ws.on('showMessage', function(data) {
+            //var json_str = data.message;
+            console.log(data.message)
+            var votes_id = "#votes";
+            var id;
+            //console.log(typeof(data.message));
+            var object = data.message;
+            var newData = [];
+            var index = 10;
+            var d;
+            $.each(object, function(questionID, value){
+              //console.log(key + ":" + object[key]);
+              data = [];
+              $.each(value, function(choiceID, votes){
+                d = {x: index, y: votes, label: labels[questionID][choiceID]};
+                data.push(d);
+                index = index + 10;
+                //id = key + choiceID;
+                //console.log(votes_id+id);
+                //$(votes_id + id).text(votes);
+                //$("#" + id).attr('data-value', votes);
+
+              });
+              index = 10;
+              charts[questionID]["options"]["data"][0]["dataPoints"] = data;
+              charts[questionID].render();
+              console.log(charts);
+            });
+            //var $row = $('<div>').text(data.message);
+            //$messages.prepend($row);
+        });
+
+        // And send an initial message
+        var msg = {};
+        msg['client_type'] = "instructor";
+        msg['quizID'] = $('input#quizID').val();
+        var json_msg = JSON.stringify(msg);
+        $ws.emit('showMessage', {
+            message: json_msg,
+        });
+    });
+
+</script>
+
+{% endblock %}
